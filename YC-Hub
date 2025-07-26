@@ -1,1 +1,30 @@
 local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/jensonhirst/Orion/main/source')))()
+local Window = OrionLib:MakeWindow({
+    Name = "YC Hub",
+    HidePremium = false, 
+    SaveConfig = false,
+    ConfigFolder = "OrionTest",
+    IntroEnabled = true,
+    IntroText = "YC Hub"
+})
+
+local Tab = Window:MakeTab({
+	Name = "Farm",
+	Icon = "rbxassetid://4483345998",
+	PremiumOnly = false
+})
+
+local Section = Tab:AddSection({
+	Name = "Auto Farm"
+})
+
+local AutoFarmValor = false
+
+Tab:AddToggle({
+	Name = "Auto Farm",
+	Default = false,
+	Callback = function(Value)
+		print(Value)
+        AutoFarmValor = Value
+	end    
+})
