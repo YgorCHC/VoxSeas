@@ -22,7 +22,6 @@ local Section = Tab:AddSection({
 })
 
 local AutoFarmValor = false
-
 Tab:AddToggle({
 	Name = "Auto Farm",
 	Default = false,
@@ -36,6 +35,8 @@ Tab:AddToggle({
 				Time = 2
 			})
 
+			local TweenService = game:GetService("TweenService")
+
 			task.spawn(function()
 				while AutoFarmValor do
 					task.wait(0.3)
@@ -43,35 +44,40 @@ Tab:AddToggle({
 					local Level = tonumber(plr.PlayerGui.MainUI.MainFrame.StastisticsFrame.LevelBackground.Level.Text)
 					if not Level then continue end
 
+					-- Obter missão baseada no nível
 					local QuestData = nil
-
 					for _, Quest in pairs(require(game.ReplicatedStorage.MainModules.Essentials.QuestDescriptions)) do
 						if Level >= Quest.MinLevel then
 							QuestData = Quest
 						end
 					end
-
 					if not QuestData then continue end
 
 					local EnemyName = QuestData.Target
 					local QuestNpcName = QuestData.Npc
 					local QuestId = QuestData.Id
 
-					-- Checa se já tem a missão
 					local QuestFrame = plr.PlayerGui.MainUI.MainFrame.CurrentQuest
+
+					-- Se ainda não tiver a missão, ir até o NPC e pegar
 					if not QuestFrame.Visible or not QuestFrame.Goal.Text:find(EnemyName) then
 						local Npc = workspace.IgnoreList.Int.NPCs.Quests:FindFirstChild(QuestNpcName, true)
 						if Npc and Npc:FindFirstChild("HumanoidRootPart") then
-							plr.Character.HumanoidRootPart.CFrame = Npc.HumanoidRootPart.CFrame
+							local npcCF = Npc.HumanoidRootPart.CFrame
+							local tween = TweenService:Create(plr.Character.HumanoidRootPart, TweenInfo.new(2, Enum.EasingStyle.Linear), { CFrame = npcCF })
+							tween:Play()
+							tween.Completed:Wait()
+
 							game.ReplicatedStorage.BetweenSides.Remotes.Events.DialogueEvent:FireServer("Quests", {
-								["NpcName"] = QuestNpcName;
+								["NpcName"] = QuestNpcName,
 								["QuestName"] = QuestId
 							})
-							task.wait(1)
+
+							task.wait(1.2) -- espera carregar a missão
 						end
 					end
 
-					-- Encontra o inimigo
+					-- Encontrar inimigo correto
 					local Enemy = nil
 					for _, island in pairs(workspace.Playability.Enemys:GetChildren()) do
 						for _, mob in pairs(island:GetChildren()) do
@@ -80,11 +86,15 @@ Tab:AddToggle({
 								break
 							end
 						end
+						if Enemy then break end
 					end
 
 					if Enemy and Enemy:FindFirstChild("HumanoidRootPart") then
 						local hrp = Enemy.HumanoidRootPart
-						plr.Character.HumanoidRootPart.CFrame = hrp.CFrame * CFrame.new(0, 5, 0)
+						local enemyCF = hrp.CFrame + Vector3.new(0, 5, 0)
+						local tween = TweenService:Create(plr.Character.HumanoidRootPart, TweenInfo.new(2, Enum.EasingStyle.Linear), { CFrame = enemyCF })
+						tween:Play()
+						tween.Completed:Wait()
 
 						-- Equipa e ataca
 						local Combat = plr.Backpack:FindFirstChild("Combat") or plr.Character:FindFirstChild("Combat")
@@ -110,6 +120,8 @@ Tab:AddToggle({
 		end
 	end    
 })
+
+
 
 
 local notifications = {
