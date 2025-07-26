@@ -72,13 +72,32 @@ local VisualTab = Window:MakeTab({
 VisualTab:AddTextbox({
 	Name = "Level:",
 	Default = "0",
-	TextDisappear = true,
+	TextDisappear = false,
 	Callback = function(Value)
 		print(Value)
         plr.PlayerGui.MainUI.MainFrame.StastisticsFrame.LevelBackground.Level.Text = Value
 	end	  
 })
 
+VisualTab:AddTextbox({
+	Name = "$:",
+	Default = "0",
+	TextDisappear = false,
+	Callback = function(Value)
+		print(Value)
+        plr.PlayerGui.MainUI.MainFrame.StastisticsFrame.Beli.Text = Value
+	end	  
+})
+
+VisualTab:AddTextbox({
+	Name = "Fragments:",
+	Default = "0",
+	TextDisappear = false,
+	Callback = function(Value)
+		print(Value)
+        plr.PlayerGui.MainUI.MainFrame.StastisticsFrame.Fragments.Text = Value
+	end	  
+})
 
 
 -- ParteFinalDoCodigo!
