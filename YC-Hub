@@ -128,7 +128,6 @@ local hum = char.Humanoid
 
 
 -- Codigo do script meme:
-
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
@@ -136,9 +135,66 @@ local Players = game:GetService("Players")
 
 local Player = Players.LocalPlayer;
 
+local DialogueEvent = ReplicatedStorage.BetweenSides.Remotes.Events.DialogueEvent;
 local CombatEvent = ReplicatedStorage.BetweenSides.Remotes.Events.CombatEvent;
 local ToolEvent = ReplicatedStorage.BetweenSides.Remotes.Events.ToolsEvent;
+local QuestsNpcs = workspace.IgnoreList.Int.NPCs.Quests;
 local Enemys = workspace.Playability.Enemys;
+
+local QuestsDecriptions = require(ReplicatedStorage.MainModules.Essentials.QuestDescriptions)
+
+local EnemiesFolders = {}
+local QuestsData = {}
+local CFrameAngle = CFrame.Angles(math.rad(-90), 0, 0)
+
+local GetCurrentQuest do
+	QuestsData.QuestsList = {}
+	QuestsData.QuestsNPCs = {}
+	QuestsData.EnemyList = {}
+	
+	table.clear(QuestsData.QuestsList)
+	
+	local CurrentQuest = nil;
+	local CurrentLevel = -1;
+	
+	for _, QuestData in QuestsDecriptions do
+		if QuestData.Goal <= 1 then continue end
+		
+		table.insert(QuestsData.QuestsList, {
+			Level = QuestData.MinLevel;
+			Target = QuestData.Target;
+			NpcName = QuestData.Npc;
+			Id = QuestData.Id;
+		})
+	end
+	
+	table.sort(QuestsData.QuestsList, function(a, b)
+		return a.Level > b.Level;
+	end)
+	
+	GetCurrentQuest = function()
+		local Level = tonumber(Player.PlayerGui.MainUI.MainFrame.StastisticsFrame.LevelBackground.Level.Text);
+		
+		if Level == CurrentLevel then
+			return CurrentQuest;
+		end
+		
+		for _, QuestData in QuestsData.QuestsList do
+			if QuestData.Level <= Level then
+				CurrentLevel, CurrentQuest = Level, QuestData
+				return QuestData
+			end
+		end
+	end
+end
+
+local Settings = {
+	ClickV2 = false;
+	TweenSpeed = 125;
+	SelectedTool = "CombatType";
+}
+
+local EquippedTool = nil;
 
 local Connections = _ENV.rz_connections or {} do
 	_ENV.rz_connections = Connections
@@ -282,7 +338,6 @@ local PlayerTP do
 	
 	local lastCFrame = nil;
 	local lastTeleport = 0;
-	local TweenSpeed = 75;
 	
 	PlayerTP = function(TargetCFrame)
 		if not IsAlive(Player.Character) or not Player.Character.PrimaryPart then
@@ -304,12 +359,12 @@ local PlayerTP do
 		local teleportPosition = TargetCFrame.Position;
 		local Distance = (PrimaryPart.Position - teleportPosition).Magnitude;
 		
-		if Distance < TweenSpeed then
+		if Distance < Settings.TweenSpeed then
 			PrimaryPart.CFrame = TargetCFrame
 			return TweenCreator:stopTween(PrimaryPart)
 		end
 		
-		TweenCreator.new(PrimaryPart, Distance / TweenSpeed, "CFrame", TargetCFrame)
+		TweenCreator.new(PrimaryPart, Distance / Settings.TweenSpeed, "CFrame", TargetCFrame)
 	end
 	
 	table.insert(Connections, BodyVelocity:GetPropertyChangedSignal("Parent"):Connect(TweenStopped))
@@ -318,50 +373,44 @@ end
 local CurrentTime = workspace:GetServerTimeNow()
 
 local function DealDamage(Enemies)
-	CurrentTime += 1;
+	CurrentTime = workspace:GetServerTimeNow()
 	
-	local Combo = math.random(4)
-	ToolEvent:FireServer("Effects", Combo)
 	CombatEvent:FireServer("DealDamage", {
 		CallTime = CurrentTime;
-		DelayTime = 0;
-		Combo = Combo;
+		DelayTime = workspace:GetServerTimeNow() - CurrentTime;
+		Combo = 1;
 		Results = Enemies;
 	})
 end
 
-local function GetClosestEnemies()
-	local Islands = Enemys:GetChildren()
-	
-	local DistanceFromIsland, ClosestIsland = math.huge;
-	
-	for i = 1, #Islands do
-		local Island = Islands[i]
-		local Model = Island:FindFirstChild("Humanoid", true) 
-		
-		if Model and Model.RootPart then
-			local Distance = Player:DistanceFromCharacter(Model.RootPart.Position)
-			
-			if Distance < DistanceFromIsland then
-				DistanceFromIsland, ClosestIsland = Distance, Island
+local function GetMobFromFolder(Folder, EnemyName)
+	for _, Enemy in Folder:GetChildren() do
+		if Enemy:GetAttribute("Respawned") and Enemy:GetAttribute("Ready") then
+			if Enemy:GetAttribute("OriginalName") == EnemyName then
+				return Enemy;
 			end
 		end
 	end
+end
+
+local function GetClosestEnemy(EnemyName)
+	local EnemyFolder = EnemiesFolders[EnemyName]
 	
-	if ClosestIsland then
-		local _Enemies = ClosestIsland:GetChildren();
-		local Enemies = {};
+	if EnemyFolder then
+		return GetMobFromFolder(EnemyFolder, EnemyName)
+	end
+	
+	local Islands = Enemys:GetChildren()
+	
+	for i = 1, #Islands do
+		local Enemies = Islands[i]:GetChildren()
 		
-		for i = 1, #_Enemies do
-			local Enemy = _Enemies[i];
-			local RootPart = Enemy:FindFirstChild("HumanoidRootPart");
-			
-			if Enemy:GetAttribute("Respawned") and Player:DistanceFromCharacter(RootPart.Position) < 2500 then
-				table.insert(Enemies, Enemy);
+		for x = 1, #Enemies do
+			if Enemies[i]:GetAttribute("OriginalName") == EnemyName then
+				EnemiesFolders[EnemyName] = Islands[i]
+				return GetMobFromFolder(Islands[i], EnemyName)
 			end
 		end
-		
-		return Enemies;
 	end
 end
 
@@ -378,23 +427,86 @@ local function BringEnemies(Enemies, Target)
 	pcall(sethiddenproperty, Player, "SimulationRadius", math.huge)
 end
 
+local function IsSelectedTool(Tool)
+	return Tool:GetAttribute(Settings.SelectedTool)
+end
 
+local function EquipCombat(Activate)
+	if not IsAlive(Player.Character) then return end
+	
+	if EquippedTool and IsSelectedTool(EquippedTool) then
+		if Activate then
+			EquippedTool:Activate()
+		end
+		
+		if EquippedTool.Parent == Player.Backpack then
+			Player.Character.Humanoid:EquipTool(EquippedTool)
+		elseif EquippedTool.Parent ~= Player.Character then
+			EquippedTool = nil;
+		end
+		return nil
+	end
+	
+	local Equipped = Player.Character:FindFirstChildOfClass("Tool")
+	
+	if Equipped and IsSelectedTool(Equipped) then
+		EquippedTool = Equipped
+		return nil;
+	end
+	
+	for _, Tool in Player.Backpack:GetChildren() do
+		if Tool:IsA("Tool") and IsSelectedTool(Tool) then
+			EquippedTool = Tool
+			return nil;
+		end
+	end
+end
+
+local function HasQuest(EnemyName)
+	local QuestFrame = Player.PlayerGui.MainUI.MainFrame.CurrentQuest;
+	return QuestFrame.Visible and QuestFrame.Goal.Text:find(EnemyName);
+end
+
+local function TakeQuest(QuestName, QuestId)
+	local Npc = QuestsNpcs:FindFirstChild(QuestName, true)
+	local RootPart = Npc and Npc.PrimaryPart
+	
+	if RootPart then
+		DialogueEvent:FireServer("Quests", { ["NpcName"] = QuestName; ["QuestName"] = QuestId })
+		PlayerTP(RootPart.CFrame)
+	end
+end
 
 
 -- ParteFinalDoCodigo!
 while AutoFarmValor == true do
     task.wait()
-    local Enemies = GetClosestEnemies()
-	if not Enemies or #Enemies == 0 then continue end
+local CurrentQuest = GetCurrentQuest()
+			if not CurrentQuest then continue end
 			
-	for _, Enemy in Enemies do
-		local HumanoidRootPart = Enemy:FindFirstChild("HumanoidRootPart")
+			if not HasQuest(CurrentQuest.Target) then
+				TakeQuest(CurrentQuest.NpcName, CurrentQuest.Id)
+				continue
+			end
+			
+			local Enemy = GetClosestEnemy(CurrentQuest.Target)
+			if not Enemy then continue end
+			
+			local HumanoidRootPart = Enemy:FindFirstChild("HumanoidRootPart")
+			
 			if HumanoidRootPart then
-					PlayerTP(HumanoidRootPart.CFrame + Vector3.yAxis * 10)
-					DealDamage(Enemies)
-					break
+				if not HumanoidRootPart:FindFirstChild("BodyVelocity") then
+					local BV = Instance.new("BodyVelocity", HumanoidRootPart)
+					BV.Velocity = Vector3.zero
+					BV.MaxForce = Vector3.one * math.huge
 				end
-            end
-        end
-	end
+				
+				HumanoidRootPart.Size = Vector3.one * 35
+				HumanoidRootPart.CanCollide = false
+				
+				EquipCombat(true)
+				DealDamage({ Enemy })
+				PlayerTP((HumanoidRootPart.CFrame + Vector3.yAxis * 10) * CFrameAngle)
+			end
+		end
 end
