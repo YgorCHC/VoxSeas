@@ -28,3 +28,21 @@ Tab:AddToggle({
         AutoFarmValor = Value
 	end    
 })
+
+Tab:AddButton({
+	Name = "Fruit Checker",
+	Callback = function()
+      		print("button pressed")
+            local TI = TweenInfo.new(0.5, Enum.EasingStyle.Linear, Enum.EasingDirection.In)
+	local plr = game.Players.LocalPlayer
+	local char = plr.Character
+
+	for _, sla in pairs(workspace.IgnoreList.Data.FruitSpawns:GetChildren()) do
+		if sla:IsA('BasePart') then
+			game.TweenService:Create(char.PrimaryPart, TI, {CFrame = sla.CFrame}):Play()
+			task.wait(.5)
+		end
+	end
+  	end    
+})
+
