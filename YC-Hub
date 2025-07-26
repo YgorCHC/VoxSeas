@@ -31,92 +31,10 @@ Tab:AddToggle({
 		if Value then
 			OrionLib:MakeNotification({
 				Name = "Auto Farm",
-				Content = "Auto Farm ativado!",
+				Content = "em breve!",
 				Time = 2
 			})
 
-			local TweenService = game:GetService("TweenService")
-
-			task.spawn(function()
-				while AutoFarmValor do
-					task.wait(0.3)
-
-					local Level = tonumber(plr.PlayerGui.MainUI.MainFrame.StastisticsFrame.LevelBackground.Level.Text)
-					if not Level then continue end
-
-					-- Obter missão baseada no nível
-					local QuestData = nil
-					for _, Quest in pairs(require(game.ReplicatedStorage.MainModules.Essentials.QuestDescriptions)) do
-						if Level >= Quest.MinLevel then
-							QuestData = Quest
-						end
-					end
-					if not QuestData then continue end
-
-					local EnemyName = QuestData.Target
-					local QuestNpcName = QuestData.Npc
-					local QuestId = QuestData.Id
-
-					local QuestFrame = plr.PlayerGui.MainUI.MainFrame.CurrentQuest
-
-					-- Se ainda não tiver a missão, ir até o NPC e pegar
-					if not QuestFrame.Visible or not QuestFrame.Goal.Text:find(EnemyName) then
-						local Npc = workspace.IgnoreList.Int.NPCs.Quests:FindFirstChild(QuestNpcName, true)
-						if Npc and Npc:FindFirstChild("HumanoidRootPart") then
-							local npcCF = Npc.HumanoidRootPart.CFrame
-							local tween = TweenService:Create(plr.Character.HumanoidRootPart, TweenInfo.new(2, Enum.EasingStyle.Linear), { CFrame = npcCF })
-							tween:Play()
-							tween.Completed:Wait()
-
-							game.ReplicatedStorage.BetweenSides.Remotes.Events.DialogueEvent:FireServer("Quests", {
-								["NpcName"] = QuestNpcName,
-								["QuestName"] = QuestId
-							})
-
-							task.wait(1.2) -- espera carregar a missão
-						end
-					end
-
-					-- Encontrar inimigo correto
-					local Enemy = nil
-					for _, island in pairs(workspace.Playability.Enemys:GetChildren()) do
-						for _, mob in pairs(island:GetChildren()) do
-							if mob:GetAttribute("OriginalName") == EnemyName and mob:GetAttribute("Ready") then
-								Enemy = mob
-								break
-							end
-						end
-						if Enemy then break end
-					end
-
-					if Enemy and Enemy:FindFirstChild("HumanoidRootPart") then
-						local hrp = Enemy.HumanoidRootPart
-						local enemyCF = hrp.CFrame + Vector3.new(0, 5, 0)
-						local tween = TweenService:Create(plr.Character.HumanoidRootPart, TweenInfo.new(2, Enum.EasingStyle.Linear), { CFrame = enemyCF })
-						tween:Play()
-						tween.Completed:Wait()
-
-						-- Equipa e ataca
-						local Combat = plr.Backpack:FindFirstChild("Combat") or plr.Character:FindFirstChild("Combat")
-						if Combat then
-							plr.Character.Humanoid:EquipTool(Combat)
-							Combat:Activate()
-							game.ReplicatedStorage.BetweenSides.Remotes.Events.CombatEvent:FireServer("DealDamage", {
-								CallTime = workspace:GetServerTimeNow(),
-								DelayTime = 0,
-								Combo = 1,
-								Results = { Enemy }
-							})
-						end
-					end
-				end
-			end)
-		else
-			OrionLib:MakeNotification({
-				Name = "Auto Farm",
-				Content = "Auto Farm desativado!",
-				Time = 2
-			})
 		end
 	end    
 })
@@ -213,7 +131,7 @@ TpTab:AddDropdown({
         local char = plr.Character
 local hum = char.Humanoid
 
-         local TI = TweenInfo.new(5, Enum.EasingStyle.Linear, Enum.EasingDirection.In)
+         local TI = TweenInfo.new(14, Enum.EasingStyle.Linear, Enum.EasingDirection.In)
          game.TweenService:Create(char.PrimaryPart, TI, {CFrame = workspace.IgnoreList.Portal[Value].CFrame}):Play()
 	end    
 })
