@@ -120,7 +120,7 @@ TpTab:AddDropdown({
 	Options = NomesIslas,
 	Callback = function(Value)
 		print(Value)
-         local TI = TweenInfo.new(0.5, Enum.EasingStyle.Linear, Enum.EasingDirection.In)
+         local TI = TweenInfo.new(2, Enum.EasingStyle.Linear, Enum.EasingDirection.In)
          game.TweenService:Create(char.PrimaryPart, TI, {CFrame = workspace.IgnoreList.Portal[Value].CFrame}):Play()
 	end    
 })
