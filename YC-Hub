@@ -29,10 +29,22 @@ Tab:AddToggle({
 	end    
 })
 
+local notifications = {
+    FruitRadar = false
+}
+
 Tab:AddButton({
 	Name = "Fruit Checker",
 	Callback = function()
       		print("button pressed")
+
+            if notifications.FruitRadar == false then
+OrionLib:MakeNotification({
+	Name = "Aviso",
+	Content = "não e 100% garantido que vai pegar uma fruta essa opção apenas teleporta voce pra todos os spawns de frutas!"
+})
+            end
+
             local TI = TweenInfo.new(0.5, Enum.EasingStyle.Linear, Enum.EasingDirection.In)
 	local plr = game.Players.LocalPlayer
 	local char = plr.Character
