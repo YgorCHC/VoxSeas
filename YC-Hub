@@ -9,8 +9,6 @@ local Window = OrionLib:MakeWindow({
 })
 
 local plr = game.Players.LocalPlayer
-local char = plr.Character
-local hum = char.Humanoid
 
 
 local Tab = Window:MakeTab({
@@ -120,7 +118,10 @@ TpTab:AddDropdown({
 	Options = NomesIslas,
 	Callback = function(Value)
 		print(Value)
-         local TI = TweenInfo.new(6, Enum.EasingStyle.Linear, Enum.EasingDirection.In)
+        local char = plr.Character
+local hum = char.Humanoid
+
+         local TI = TweenInfo.new(5, Enum.EasingStyle.Linear, Enum.EasingDirection.In)
          game.TweenService:Create(char.PrimaryPart, TI, {CFrame = workspace.IgnoreList.Portal[Value].CFrame}):Play()
 	end    
 })
