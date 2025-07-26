@@ -99,6 +99,31 @@ VisualTab:AddTextbox({
 	end	  
 })
 
+local TpTab = Window:MakeTab({
+	Name = "Teleport",
+	Icon = "rbxassetid://4483345998",
+	PremiumOnly = false
+})
+
+local Portais = workspace.IgnoreList:FindFirstChild("Portal")
+local NomesIslas = {"-"} 
+
+if Portais then
+	for _, portal in ipairs(Portais:GetChildren()) do
+		table.insert(NomesIslas, portal.Name)
+	end
+end
+
+TpTab:AddDropdown({
+	Name = "Island",
+	Default = "-",
+	Options = NomesIslas,
+	Callback = function(Value)
+		print(Value)
+         local TI = TweenInfo.new(0.5, Enum.EasingStyle.Linear, Enum.EasingDirection.In)
+         game.TweenService:Create(char.PrimaryPart, TI, {CFrame = workspace.IgnoreList.Portal[Value].CFrame}):Play()
+	end    
+})
 
 -- ParteFinalDoCodigo!
 while AutoFarmValor == true do
