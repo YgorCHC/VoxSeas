@@ -27,10 +27,90 @@ Tab:AddToggle({
 	Name = "Auto Farm",
 	Default = false,
 	Callback = function(Value)
-		print(Value)
-        AutoFarmValor = Value
+		AutoFarmValor = Value
+
+		if Value then
+			OrionLib:MakeNotification({
+				Name = "Auto Farm",
+				Content = "Auto Farm ativado!",
+				Time = 2
+			})
+
+			task.spawn(function()
+				while AutoFarmValor do
+					task.wait(0.3)
+
+					local Level = tonumber(plr.PlayerGui.MainUI.MainFrame.StastisticsFrame.LevelBackground.Level.Text)
+					if not Level then continue end
+
+					local QuestData = nil
+
+					for _, Quest in pairs(require(game.ReplicatedStorage.MainModules.Essentials.QuestDescriptions)) do
+						if Level >= Quest.MinLevel then
+							QuestData = Quest
+						end
+					end
+
+					if not QuestData then continue end
+
+					local EnemyName = QuestData.Target
+					local QuestNpcName = QuestData.Npc
+					local QuestId = QuestData.Id
+
+					-- Checa se já tem a missão
+					local QuestFrame = plr.PlayerGui.MainUI.MainFrame.CurrentQuest
+					if not QuestFrame.Visible or not QuestFrame.Goal.Text:find(EnemyName) then
+						local Npc = workspace.IgnoreList.Int.NPCs.Quests:FindFirstChild(QuestNpcName, true)
+						if Npc and Npc:FindFirstChild("HumanoidRootPart") then
+							plr.Character.HumanoidRootPart.CFrame = Npc.HumanoidRootPart.CFrame
+							game.ReplicatedStorage.BetweenSides.Remotes.Events.DialogueEvent:FireServer("Quests", {
+								["NpcName"] = QuestNpcName;
+								["QuestName"] = QuestId
+							})
+							task.wait(1)
+						end
+					end
+
+					-- Encontra o inimigo
+					local Enemy = nil
+					for _, island in pairs(workspace.Playability.Enemys:GetChildren()) do
+						for _, mob in pairs(island:GetChildren()) do
+							if mob:GetAttribute("OriginalName") == EnemyName and mob:GetAttribute("Ready") then
+								Enemy = mob
+								break
+							end
+						end
+					end
+
+					if Enemy and Enemy:FindFirstChild("HumanoidRootPart") then
+						local hrp = Enemy.HumanoidRootPart
+						plr.Character.HumanoidRootPart.CFrame = hrp.CFrame * CFrame.new(0, 5, 0)
+
+						-- Equipa e ataca
+						local Combat = plr.Backpack:FindFirstChild("Combat") or plr.Character:FindFirstChild("Combat")
+						if Combat then
+							plr.Character.Humanoid:EquipTool(Combat)
+							Combat:Activate()
+							game.ReplicatedStorage.BetweenSides.Remotes.Events.CombatEvent:FireServer("DealDamage", {
+								CallTime = workspace:GetServerTimeNow(),
+								DelayTime = 0,
+								Combo = 1,
+								Results = { Enemy }
+							})
+						end
+					end
+				end
+			end)
+		else
+			OrionLib:MakeNotification({
+				Name = "Auto Farm",
+				Content = "Auto Farm desativado!",
+				Time = 2
+			})
+		end
 	end    
 })
+
 
 local notifications = {
     FruitRadar = false
@@ -125,8 +205,5 @@ local hum = char.Humanoid
          game.TweenService:Create(char.PrimaryPart, TI, {CFrame = workspace.IgnoreList.Portal[Value].CFrame}):Play()
 	end    
 })
-
-
--- Codigo do script meme:
 
 
