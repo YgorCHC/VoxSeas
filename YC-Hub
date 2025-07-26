@@ -5,8 +5,13 @@ local Window = OrionLib:MakeWindow({
     SaveConfig = false,
     ConfigFolder = "OrionTest",
     IntroEnabled = true,
-    IntroText = "YC Hub"
+    IntroText = "By Cloudizix - YT"
 })
+
+local plr = game.Players.LocalPlayer
+local char = plr.Character
+local hum = char.Humanoid
+
 
 local Tab = Window:MakeTab({
 	Name = "Farm",
@@ -58,3 +63,26 @@ OrionLib:MakeNotification({
   	end    
 })
 
+local VisualTab = Window:MakeTab({
+	Name = "Visual/Fake",
+	Icon = "rbxassetid://4483345998",
+	PremiumOnly = false
+})
+
+VisualTab:AddTextbox({
+	Name = "Level:",
+	Default = "0",
+	TextDisappear = true,
+	Callback = function(Value)
+		print(Value)
+        plr.PlayerGui.MainUI.MainFrame.StastisticsFrame.LevelBackground.Level.Text = Value
+	end	  
+})
+
+
+
+-- ParteFinalDoCodigo!
+while AutoFarmValor == true do
+    task.wait()
+
+end
