@@ -131,7 +131,7 @@ TpTab:AddDropdown({
         local char = plr.Character
 local hum = char.Humanoid
 
-         local TI = TweenInfo.new(14, Enum.EasingStyle.Linear, Enum.EasingDirection.In)
+         local TI = TweenInfo.new(18, Enum.EasingStyle.Linear, Enum.EasingDirection.In)
          game.TweenService:Create(char.PrimaryPart, TI, {CFrame = workspace.IgnoreList.Portal[Value].CFrame}):Play()
 	end    
 })
